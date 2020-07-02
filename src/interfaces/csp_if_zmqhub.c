@@ -92,7 +92,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 		// Receive data
 		if (zmq_msg_recv(&msg, drv->subscriber, 0) == -1) {
-			csp_log_error("RX %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
+			csp_log_error("RX in csp_if_zmqhub.c %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
 			continue;
 		}
 
