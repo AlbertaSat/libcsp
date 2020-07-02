@@ -91,7 +91,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
 
 		// Receive data
-		if (zmq_msg_recv(&msg, drv->subscriber, 0) < 0) {
+		if (zmq_msg_recv(&msg, drv->subscriber, 0) == -1) {
 			csp_log_error("RX %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
 			continue;
 		}
