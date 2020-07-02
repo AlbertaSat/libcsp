@@ -30,6 +30,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/arch/csp_thread.h>
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_semaphore.h>
+#include <pthread.h>
+
+/* This is the critical section object (statically allocated). */
+static pthread_mutex_t lock =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 #define CSP_ZMQ_MTU   1024   // max payload data, see documentation
 
@@ -80,6 +84,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 	//csp_log_info("RX %s started", drv->iface.name);
 
 	while(1) {
+		pthread_mutex_lock( &lock );
 		zmq_msg_t msg;
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
 
@@ -119,8 +124,10 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		csp_qfifo_write(packet, &drv->iface, NULL);
 
 		zmq_msg_close(&msg);
+		pthread_mutex_unlock( &lock );
 	}
 
+	pthread_mutex_destroy(&lock); 
 	return CSP_TASK_RETURN;
 
 }
@@ -144,6 +151,11 @@ int csp_zmqhub_init(uint8_t addr,
 
 	char sub[100];
 	csp_zmqhub_make_endpoint(host, CSP_ZMQPROXY_PUBLISH_PORT, sub, sizeof(sub));
+	
+	if (pthread_mutex_init(&lock, NULL) != 0) { 
+        csp_log_error("\n mutex init has failed\n"); 
+        return 1; 
+    }
 
 	return csp_zmqhub_init_w_endpoints(addr, pub, sub, flags, return_interface);
 }
