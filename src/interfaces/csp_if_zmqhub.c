@@ -63,7 +63,9 @@ int csp_zmqhub_tx(const csp_route_t * route, csp_packet_t * packet) {
 	uint8_t * destptr = ((uint8_t *) &packet->id) - sizeof(dest);
 	memcpy(destptr, &dest, sizeof(dest));
 	csp_bin_sem_wait(&drv->tx_wait, 1000); /* Using ZMQ in thread safe manner*/
+	pthread_mutex_lock( &lock );
 	int result = zmq_send(drv->publisher, destptr, length + sizeof(packet->id) + sizeof(dest), 0);
+	pthread_mutex_lock( &lock );
 	csp_bin_sem_post(&drv->tx_wait); /* Release tx semaphore */
 	if (result < 0) {
 		csp_log_error("ZMQ send error: %u %s\r\n", result, zmq_strerror(zmq_errno()));
