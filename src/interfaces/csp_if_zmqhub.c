@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <pthread.h>
 
 /* This is the critical section object (statically allocated). */
-static pthread_mutex_t lock =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+static pthread_mutex_t lock =  PTHREAD_MUTEX_INITIALIZER;
 
 #define CSP_ZMQ_MTU   1024   // max payload data, see documentation
 
@@ -127,7 +127,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		pthread_mutex_unlock( &lock );
 	}
 
-	pthread_mutex_destroy(&lock); 
+	pthread_mutex_destroy(&lock);
 	return CSP_TASK_RETURN;
 
 }
@@ -151,10 +151,10 @@ int csp_zmqhub_init(uint8_t addr,
 
 	char sub[100];
 	csp_zmqhub_make_endpoint(host, CSP_ZMQPROXY_PUBLISH_PORT, sub, sizeof(sub));
-	
-	if (pthread_mutex_init(&lock, NULL) != 0) { 
-        csp_log_error("\n mutex init has failed\n"); 
-        return 1; 
+
+	if (pthread_mutex_init(&lock, NULL) != 0) {
+        csp_log_error("\n mutex init has failed\n");
+        return 1;
     }
 
 	return csp_zmqhub_init_w_endpoints(addr, pub, sub, flags, return_interface);
