@@ -52,7 +52,7 @@ typedef struct {
 	uint8_t * rxfilter;
 	unsigned int rxfilter_count;
 	zmq_driver_t * drv;
-	const char * subscribe_endpoint;
+	char * subscribe_endpoint;
 } rx_info_t;
 
 /**
@@ -86,16 +86,17 @@ int csp_zmqhub_tx(const csp_route_t * route, csp_packet_t * packet) {
 
 CSP_DEFINE_TASK(csp_zmqhub_task) {
 
-	zmq_driver_t * drv = param->drv;
-	uint8_t * rxfilter = param->rxfilter;
-	unsigned int rxfilter_count = param->rxfilter_count;
-	const char * subscribe_endpoint = param->subscribe_endpoint;
+	rx_info_t *rx = (rx_info_t *) param;
+	zmq_driver_t * drv = rx->drv;
+	uint8_t * rxfilter = rx->rxfilter;
+	unsigned int rxfilter_count = rx->rxfilter_count;
+	const char * subscribe_endpoint = rx->subscribe_endpoint;
 	csp_packet_t * packet;
 	const uint32_t HEADER_SIZE = (sizeof(packet->id) + sizeof(uint8_t));
 
 	//csp_log_info("RX %s started", drv->iface.name);
 	void* ctx = zmq_ctx_new();
-	void * subscriber = zmq_socket(context, ZMQ_SUB);
+	void * subscriber = zmq_socket(ctx, ZMQ_SUB);
 	assert(subscriber);
 
 	if (rxfilter && rxfilter_count) {
