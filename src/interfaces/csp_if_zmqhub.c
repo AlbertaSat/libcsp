@@ -48,6 +48,13 @@ typedef struct {
 	csp_iface_t iface;
 } zmq_driver_t;
 
+typedef struct {
+	uint8_t * rxfilter;
+	unsigned int rxfilter_count;
+	zmq_driver_t * drv;
+	const char * subscribe_endpoint;
+} rx_info_t;
+
 /**
  * Interface transmit function
  * @param packet Packet to transmit
@@ -79,11 +86,30 @@ int csp_zmqhub_tx(const csp_route_t * route, csp_packet_t * packet) {
 
 CSP_DEFINE_TASK(csp_zmqhub_task) {
 
-	zmq_driver_t * drv = param;
+	zmq_driver_t * drv = param->drv;
+	uint8_t * rxfilter = param->rxfilter;
+	unsigned int rxfilter_count = param->rxfilter_count;
+	const char * subscribe_endpoint = param->subscribe_endpoint;
 	csp_packet_t * packet;
 	const uint32_t HEADER_SIZE = (sizeof(packet->id) + sizeof(uint8_t));
 
 	//csp_log_info("RX %s started", drv->iface.name);
+	void* ctx = zmq_ctx_new();
+	void * subscriber = zmq_socket(context, ZMQ_SUB);
+	assert(subscriber);
+
+	if (rxfilter && rxfilter_count) {
+		// subscribe to all 'rx_filters' -> subscribe to all packets, where the first byte (address/via) matches a rx_filter
+		for (unsigned int i = 0; i < rxfilter_count; ++i, ++rxfilter) {
+			assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, rxfilter, 1) == 0);
+		}
+	} else {
+		// subscribe to all packets - no filter
+		assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, NULL, 0) == 0);
+	}
+
+	assert(zmq_connect(subscriber, subscribe_endpoint) == 0);
+
 
 	while(1) {
 		pthread_mutex_lock( &lock );
@@ -91,7 +117,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
 
 		// Receive data
-		if (zmq_msg_recv(&msg, drv->subscriber, 0) == -1) {
+		if (zmq_msg_recv(&msg, subscriber, 0) == -1) {
 			csp_log_error("RX in csp_if_zmqhub.c %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
 			continue;
 		}
@@ -192,6 +218,8 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
                                               csp_iface_t ** return_interface) {
 
 	zmq_driver_t * drv = csp_calloc(1, sizeof(*drv));
+	rx_info_t * rx = csp_calloc(1, sizeof(*rx));
+	
 	assert(drv);
 
         if (ifname == NULL) {
@@ -215,28 +243,23 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
 	assert(drv->publisher);
 
 	/* Subscriber (RX) */
-	drv->subscriber = zmq_socket(drv->context, ZMQ_SUB);
-	assert(drv->subscriber);
+	//drv->subscriber = zmq_socket(drv->context, ZMQ_SUB);
+	//assert(drv->subscriber);
 
-	if (rxfilter && rxfilter_count) {
-		// subscribe to all 'rx_filters' -> subscribe to all packets, where the first byte (address/via) matches a rx_filter
-		for (unsigned int i = 0; i < rxfilter_count; ++i, ++rxfilter) {
-			assert(zmq_setsockopt(drv->subscriber, ZMQ_SUBSCRIBE, rxfilter, 1) == 0);
-		}
-	} else {
-		// subscribe to all packets - no filter
-		assert(zmq_setsockopt(drv->subscriber, ZMQ_SUBSCRIBE, NULL, 0) == 0);
-	}
+	rx->drv = drv;
+	rx->rxfilter = rxfilter;
+	rx->rxfilter_count = rxfilter_count;
+	rx->subscribe_endpoint = subscribe_endpoint;
 
 	/* Connect to server */
 	assert(zmq_connect(drv->publisher, publish_endpoint) == 0);
-	assert(zmq_connect(drv->subscriber, subscribe_endpoint) == 0);
+	// assert(zmq_connect(drv->subscriber, subscribe_endpoint) == 0);
 
 	/* ZMQ isn't thread safe, so we add a binary semaphore to wait on for tx */
 	assert(csp_bin_sem_create(&drv->tx_wait) == CSP_SEMAPHORE_OK);
 
 	/* Start RX thread */
-	assert(csp_thread_create(csp_zmqhub_task, drv->iface.name, 20000, drv, 0, &drv->rx_thread) == 0);
+	assert(csp_thread_create(csp_zmqhub_task, drv->iface.name, 20000, rx, 0, &drv->rx_thread) == 0);
 
 	/* Register interface */
 	csp_iflist_add(&drv->iface);
