@@ -212,9 +212,9 @@ int csp_zmqhub_init_w_endpoints(uint8_t addr,
 }
 
 int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
-                                              const uint8_t rxfilter[], unsigned int rxfilter_count,
-                                              const char * publish_endpoint,
-                                              const char * subscribe_endpoint,
+                                              uint8_t rxfilter[], unsigned int rxfilter_count,
+                                              char * publish_endpoint,
+                                              char * subscribe_endpoint,
                                               uint32_t flags,
                                               csp_iface_t ** return_interface) {
 
