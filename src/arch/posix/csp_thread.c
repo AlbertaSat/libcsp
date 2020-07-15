@@ -24,13 +24,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
+#include <sched.h>
 
 int csp_thread_create(csp_thread_func_t routine, const char * const thread_name, unsigned int stack_size, void * parameters, unsigned int priority, csp_thread_handle_t * return_handle) {
 
 	pthread_attr_t attributes;
-	if (pthread_attr_init(&attributes) != 0) {
+	sched_param sched;
+	int ret;
+
+	ret = pthread_attr_init(&attributes)
+	ret = pthread_attr_getschedparam (&attributes, &sched);
+	if (ret != 0) {
 		return CSP_ERR_NOMEM;
 	}
+	sched.sched_priority = priority - 20;
+	pthread_attr_setschedparam (&attributes, &sched);
+
 	// if stack size is 0, use default stack size
 	if (stack_size) {
 		unsigned int min_stack_size = PTHREAD_STACK_MIN;// use at least one memory
