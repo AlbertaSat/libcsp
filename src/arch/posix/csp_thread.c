@@ -32,7 +32,7 @@ int csp_thread_create(csp_thread_func_t routine, const char * const thread_name,
 	sched_param sched;
 	int ret;
 
-	ret = pthread_attr_init(&attributes)
+	ret = pthread_attr_init(&attributes);
 	ret = pthread_attr_getschedparam (&attributes, &sched);
 	if (ret != 0) {
 		return CSP_ERR_NOMEM;
