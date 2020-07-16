@@ -81,13 +81,12 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 	while(1) {
 		zmq_msg_t msg;
+		int rc;
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
-
-		// Receive data
-		if (zmq_msg_recv(&msg, drv->subscriber, 0) < 0) {
-			csp_log_error("RX an error %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
-			continue;
-		}
+		
+		do {
+			rc = zmq_msg_recv(&msg, drv->subscriber, 0);
+		} while ((rc == -1) && (zmq_errno() == EINTR));
 
 		unsigned int datalen = zmq_msg_size(&msg);
 		if (datalen < HEADER_SIZE) {
