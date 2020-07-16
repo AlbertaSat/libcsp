@@ -81,7 +81,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 	while(1) {
 		zmq_msg_t msg;
-		int rc, bytes;
+		int rc;
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
 		
 		if (zmq_msg_recv(&msg, drv->subscriber, ZMQ_DONTWAIT) > 0){
