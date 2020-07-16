@@ -86,7 +86,9 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 		// Receive data
 		if ((rc = zmq_msg_recv(&msg, drv->subscriber, ZMQ_DONTWAIT)) < 0) {
-			csp_log_error("RX an error %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
+			if (rc != EAGAIN) {
+				csp_log_error("RX an error %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
+			}
 			continue;
 		}
 		
