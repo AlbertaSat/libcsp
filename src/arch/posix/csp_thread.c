@@ -29,16 +29,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 int csp_thread_create(csp_thread_func_t routine, const char * const thread_name, unsigned int stack_size, void * parameters, unsigned int priority, csp_thread_handle_t * return_handle) {
 
 	pthread_attr_t attributes;
-	sched_param sched;
-	int ret;
+	struct sched_param sched;
+	int ret, policy;
 
 	ret = pthread_attr_init(&attributes);
-	ret = pthread_attr_getschedparam (&attributes, &sched);
+	ret = pthread_attr_getschedparam (&attributes, &policy, &sched);
 	if (ret != 0) {
 		return CSP_ERR_NOMEM;
 	}
 	sched.sched_priority = priority - 20;
-	pthread_attr_setschedparam (&attributes, &sched);
+	pthread_attr_setschedparam (attributes, policy, sched);
 
 	// if stack size is 0, use default stack size
 	if (stack_size) {
