@@ -81,18 +81,10 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 	while(1) {
 		zmq_msg_t msg;
-		int rc;
+		int rc, bytes;
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
-
-		// Receive data
-		if ((rc = zmq_msg_recv(&msg, drv->subscriber, ZMQ_DONTWAIT)) < 0) {
-			if (rc != EAGAIN) {
-				csp_log_error("RX an error %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
-			}
-			continue;
-		}
 		
-		if (rc != EAGAIN){
+		if (zmq_msg_recv(&msg, drv->subscriber, ZMQ_DONTWAIT) > 0){
 			unsigned int datalen = zmq_msg_size(&msg);
 			if (datalen < HEADER_SIZE) {
 				csp_log_warn("RX %s: Too short datalen: %u - expected min %u bytes", drv->iface.name, datalen, HEADER_SIZE);
@@ -121,6 +113,11 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 			// Route packet
 			csp_qfifo_write(packet, &drv->iface, NULL);
+		} else {
+			rc = zmq_errno();
+			if (rc != EAGAIN) {
+				csp_log_error("RX an error %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
+			}
 		}
 		zmq_msg_close(&msg);
 	}
