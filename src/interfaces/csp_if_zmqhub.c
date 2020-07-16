@@ -79,12 +79,18 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 	//csp_log_info("RX %s started", drv->iface.name);
 
+	void * ctx = zmq_ctx_new();
+	void * subscriber = zmq_socket(ctx, ZMQ_SUB);
+	char sub[100];
+	csp_zmqhub_make_endpoint("localhost", CSP_ZMQPROXY_PUBLISH_PORT, sub, sizeof(sub));
+	zmq_connect(subscriber, sub);
+
 	while(1) {
 		zmq_msg_t msg;
 		int rc;
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
 		
-		if (zmq_msg_recv(&msg, drv->subscriber, ZMQ_DONTWAIT) > 0){
+		if (zmq_msg_recv(&msg, subscriber, ZMQ_DONTWAIT) > 0){
 			unsigned int datalen = zmq_msg_size(&msg);
 			if (datalen < HEADER_SIZE) {
 				csp_log_warn("RX %s: Too short datalen: %u - expected min %u bytes", drv->iface.name, datalen, HEADER_SIZE);
@@ -202,22 +208,22 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
 	assert(drv->publisher);
 
 	/* Subscriber (RX) */
-	drv->subscriber = zmq_socket(drv->context, ZMQ_SUB);
-	assert(drv->subscriber);
+	// drv->subscriber = zmq_socket(drv->context, ZMQ_SUB);
+	// assert(drv->subscriber);
 
-	if (rxfilter && rxfilter_count) {
-		// subscribe to all 'rx_filters' -> subscribe to all packets, where the first byte (address/via) matches a rx_filter
-		for (unsigned int i = 0; i < rxfilter_count; ++i, ++rxfilter) {
-			assert(zmq_setsockopt(drv->subscriber, ZMQ_SUBSCRIBE, rxfilter, 1) == 0);
-		}
-	} else {
-		// subscribe to all packets - no filter
-		assert(zmq_setsockopt(drv->subscriber, ZMQ_SUBSCRIBE, NULL, 0) == 0);
-	}
+	// if (rxfilter && rxfilter_count) {
+	// 	// subscribe to all 'rx_filters' -> subscribe to all packets, where the first byte (address/via) matches a rx_filter
+	// 	for (unsigned int i = 0; i < rxfilter_count; ++i, ++rxfilter) {
+	// 		assert(zmq_setsockopt(drv->subscriber, ZMQ_SUBSCRIBE, rxfilter, 1) == 0);
+	// 	}
+	// } else {
+	// 	// subscribe to all packets - no filter
+	// 	assert(zmq_setsockopt(drv->subscriber, ZMQ_SUBSCRIBE, NULL, 0) == 0);
+	// }
 
 	/* Connect to server */
 	assert(zmq_connect(drv->publisher, publish_endpoint) == 0);
-	assert(zmq_connect(drv->subscriber, subscribe_endpoint) == 0);
+	// assert(zmq_connect(drv->subscriber, subscribe_endpoint) == 0);
 
 	/* ZMQ isn't thread safe, so we add a binary semaphore to wait on for tx */
 	assert(csp_bin_sem_create(&drv->tx_wait) == CSP_SEMAPHORE_OK);
