@@ -30,15 +30,15 @@ int csp_thread_create(csp_thread_func_t routine, const char * const thread_name,
 
 	pthread_attr_t attributes;
 	struct sched_param sched;
-	int ret, policy;
+	int ret;
 
 	ret = pthread_attr_init(&attributes);
-	ret = pthread_attr_getschedparam (&attributes, &policy, &sched);
+	ret = pthread_attr_getschedparam (&attributes, &sched);
 	if (ret != 0) {
 		return CSP_ERR_NOMEM;
 	}
 	sched.sched_priority = priority - 20;
-	pthread_attr_setschedparam (attributes, policy, sched);
+	pthread_attr_setschedparam (&attributes, &sched);
 
 	// if stack size is 0, use default stack size
 	if (stack_size) {
