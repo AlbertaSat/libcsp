@@ -83,40 +83,43 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		zmq_msg_t msg;
 		int rc;
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
+
+		// Receive data
+		if ((rc = zmq_msg_recv(&msg, drv->subscriber, ZMQ_DONTWAIT)) < 0) {
+			csp_log_error("RX an error %s: %s", drv->iface.name, zmq_strerror(zmq_errno()));
+			continue;
+		}
 		
-		do {
-			rc = zmq_msg_recv(&msg, drv->subscriber, 0);
-		} while ((rc == -1) && (zmq_errno() == EINTR));
+		if (rc != EAGAIN){
+			unsigned int datalen = zmq_msg_size(&msg);
+			if (datalen < HEADER_SIZE) {
+				csp_log_warn("RX %s: Too short datalen: %u - expected min %u bytes", drv->iface.name, datalen, HEADER_SIZE);
+				zmq_msg_close(&msg);
+				continue;
+			}
 
-		unsigned int datalen = zmq_msg_size(&msg);
-		if (datalen < HEADER_SIZE) {
-			csp_log_warn("RX %s: Too short datalen: %u - expected min %u bytes", drv->iface.name, datalen, HEADER_SIZE);
-			zmq_msg_close(&msg);
-			continue;
+			// Create new csp packet
+			packet = csp_buffer_get(datalen - HEADER_SIZE);
+			if (packet == NULL) {
+				csp_log_warn("RX %s: Failed to get csp_buffer(%u)", drv->iface.name, datalen);
+				zmq_msg_close(&msg);
+				continue;
+			}
+
+			// Copy the data from zmq to csp
+			const uint8_t * rx_data = zmq_msg_data(&msg);
+
+			// First byte is the "via" address
+			++rx_data;
+			--datalen;
+
+			// Remaining is CSP header and payload
+			memcpy(&packet->id, rx_data, datalen);
+			packet->length = (datalen - sizeof(packet->id));
+
+			// Route packet
+			csp_qfifo_write(packet, &drv->iface, NULL);
 		}
-
-		// Create new csp packet
-		packet = csp_buffer_get(datalen - HEADER_SIZE);
-		if (packet == NULL) {
-			csp_log_warn("RX %s: Failed to get csp_buffer(%u)", drv->iface.name, datalen);
-			zmq_msg_close(&msg);
-			continue;
-		}
-
-		// Copy the data from zmq to csp
-		const uint8_t * rx_data = zmq_msg_data(&msg);
-
-		// First byte is the "via" address
-		++rx_data;
-		--datalen;
-
-		// Remaining is CSP header and payload
-		memcpy(&packet->id, rx_data, datalen);
-		packet->length = (datalen - sizeof(packet->id));
-
-		// Route packet
-		csp_qfifo_write(packet, &drv->iface, NULL);
-
 		zmq_msg_close(&msg);
 	}
 
