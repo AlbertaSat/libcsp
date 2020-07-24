@@ -168,14 +168,17 @@ int getbaud(int ifd) {
 #endif
 
 int csp_usart_write(csp_usart_fd_t fd, const void * data, size_t data_length) {
-
-	if (fd >= 0) {
-		int res = write(fd, data, data_length);
-		if (res >= 0) {
-			return res;
-		}
-	}
-	return CSP_ERR_TX; // best matching CSP error code.
+ size_t res = 0;
+ if (fd >= 0) {
+	 for (uint8_t i = 0; i < (uint8_t) data_length; i++) {
+     // printf("send %d\n",*(((uint8_t*) data) + i) );
+			res += write(fd, ((uint8_t*) data) + i, sizeof(uint8_t));
+	 }
+	 if (res == data_length) {
+		 return res;
+	 }
+ }
+ return CSP_ERR_TX; // best matching CSP error code.
 
 }
 

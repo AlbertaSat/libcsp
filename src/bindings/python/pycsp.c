@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -22,10 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp.h>
 #include <csp/csp_cmp.h>
 #include <csp/crypto/csp_xtea.h>
-#include <csp/interfaces/csp_if_zmqhub.h>
+// #include <csp/interfaces/csp_if_zmqhub.h>
 #include <csp/interfaces/csp_if_kiss.h>
 #include <csp/drivers/usart.h>
-#include <csp/drivers/can_socketcan.h>
+// #include <csp/drivers/can_socketcan.h>
 #include <csp/csp_endian.h>
 
 #define SOCKET_CAPSULE      "csp_socket_t"
@@ -146,7 +146,7 @@ static PyObject* pycsp_init(PyObject *self, PyObject *args) {
     conf.hostname = hostname;
     conf.model = model;
     conf.revision = revision;
-    
+
     int res = csp_init(&conf);
     if (res != CSP_ERR_NONE) {
         return PyErr_Error("csp_init()", res);
@@ -555,7 +555,7 @@ static PyObject* pycsp_rtable_set(PyObject *self, PyObject *args) {
         return NULL; // TypeError is thrown
     }
 
-    int res = csp_rtable_set(node, mask, csp_iflist_get_by_name(interface_name), via);
+    int res = csp_rtable_set(CSP_DEFAULT_ROUTE, mask, csp_iflist_get_by_name(interface_name), via);
     if (res != CSP_ERR_NONE) {
         return PyErr_Error("csp_rtable_set()", res);
     }
@@ -792,47 +792,47 @@ static PyObject* pycsp_cmp_clock_get(PyObject *self, PyObject *args) {
                          csp_ntoh32(msg.clock.tv_nsec));
 }
 
-static PyObject* pycsp_zmqhub_init(PyObject *self, PyObject *args) {
-    char addr;
-    char* host;
-    if (!PyArg_ParseTuple(args, "bs", &addr, &host)) {
-        return NULL; // TypeError is thrown
-    }
+// static PyObject* pycsp_zmqhub_init(PyObject *self, PyObject *args) {
+//     char addr;
+//     char* host;
+//     if (!PyArg_ParseTuple(args, "bs", &addr, &host)) {
+//         return NULL; // TypeError is thrown
+//     }
+//
+//     int res = csp_zmqhub_init(addr, host, 0, NULL);
+//     if (res != CSP_ERR_NONE) {
+//         return PyErr_Error("csp_zmqhub_init()", res);
+//     }
+//
+//     Py_RETURN_NONE;
+// }
 
-    int res = csp_zmqhub_init(addr, host, 0, NULL);
-    if (res != CSP_ERR_NONE) {
-        return PyErr_Error("csp_zmqhub_init()", res);
-    }
-
-    Py_RETURN_NONE;
-}
-
-static PyObject* pycsp_can_socketcan_init(PyObject *self, PyObject *args) {
-    char* ifc;
-    int bitrate = 1000000;
-    int promisc = 0;
-    if (!PyArg_ParseTuple(args, "s|ii", &ifc, &bitrate, &promisc)) {
-        return NULL;
-    }
-
-    int res = csp_can_socketcan_open_and_add_interface(ifc, CSP_IF_CAN_DEFAULT_NAME, bitrate, promisc, NULL);
-    if (res != CSP_ERR_NONE) {
-        return PyErr_Error("csp_can_socketcan_open_and_add_interface()", res);
-    }
-
-    Py_RETURN_NONE;
-}
+// static PyObject* pycsp_can_socketcan_init(PyObject *self, PyObject *args) {
+//     char* ifc;
+//     int bitrate = 1000000;
+//     int promisc = 0;
+//     if (!PyArg_ParseTuple(args, "s|ii", &ifc, &bitrate, &promisc)) {
+//         return NULL;
+//     }
+//
+//     int res = csp_can_socketcan_open_and_add_interface(ifc, CSP_IF_CAN_DEFAULT_NAME, bitrate, promisc, NULL);
+//     if (res != CSP_ERR_NONE) {
+//         return PyErr_Error("csp_can_socketcan_open_and_add_interface()", res);
+//     }
+//
+//     Py_RETURN_NONE;
+// }
 
 static PyObject* pycsp_kiss_init(PyObject *self, PyObject *args) {
     char* device;
-    uint32_t baudrate = 500000;
+    uint32_t baudrate = 9600;
     uint32_t mtu = 512;
     const char* if_name = CSP_IF_KISS_DEFAULT_NAME;
     if (!PyArg_ParseTuple(args, "s|IIs", &device, &baudrate, &mtu, &if_name)) {
         return NULL; // TypeError is thrown
     }
 
-    csp_usart_conf_t conf = {.device = device, .baudrate = baudrate};
+    csp_usart_conf_t conf = {.device = "/dev/ttyUSB0", .baudrate = baudrate, .databits = 8, .stopbits = 1};
     int res = csp_usart_open_and_add_kiss_interface(&conf, if_name, NULL);
     if (res != CSP_ERR_NONE) {
         return PyErr_Error("csp_usart_open_and_add_kiss_interface()", res);
@@ -947,11 +947,11 @@ static PyMethodDef methods[] = {
     {"cmp_clock_get",       pycsp_cmp_clock_get,       METH_VARARGS, ""},
 
     /* csp/interfaces/csp_if_zmqhub.h */
-    {"zmqhub_init",         pycsp_zmqhub_init,         METH_VARARGS, ""},
+    // {"zmqhub_init",         pycsp_zmqhub_init,         METH_VARARGS, ""},
     {"kiss_init",           pycsp_kiss_init,           METH_VARARGS, ""},
 
     /* csp/drivers/can_socketcan.h */
-    {"can_socketcan_init",  pycsp_can_socketcan_init,  METH_VARARGS, ""},
+    // {"can_socketcan_init",  pycsp_can_socketcan_init,  METH_VARARGS, ""},
 
     /* helpers */
     {"packet_get_length",   pycsp_packet_get_length,   METH_O,       ""},
@@ -1056,8 +1056,8 @@ PyMODINIT_FUNC PyInit_libcsp_py3(void) {
     /* misc */
     PyModule_AddIntConstant(m, "CSP_NODE_MAC", CSP_NODE_MAC);
     PyModule_AddIntConstant(m, "CSP_NO_VIA_ADDRESS", CSP_NO_VIA_ADDRESS);
+    PyModule_AddIntConstant(m, "CSP_DEFAULT_ROUTE", CSP_DEFAULT_ROUTE);
     PyModule_AddIntConstant(m, "CSP_MAX_TIMEOUT", CSP_MAX_TIMEOUT);
-    
+
     return m;
 }
-

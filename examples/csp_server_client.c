@@ -96,8 +96,6 @@ CSP_DEFINE_TASK(task_client) {
 
 	csp_log_info("Client task started");
 
-	unsigned int count = 0;
-
 	while (1) {
 
 		csp_sleep_ms(test_mode ? 200 : 1000);
@@ -106,43 +104,6 @@ CSP_DEFINE_TASK(task_client) {
 		int result = csp_ping(server_address, 1000, 100, CSP_O_NONE);
 		csp_log_info("Ping address: %u, result %d [mS]", server_address, result);
 
-		/* Send reboot request to server, the server has no actual implementation of csp_sys_reboot() and fails to reboot */
-		csp_reboot(server_address);
-		csp_log_info("reboot system request sent to address: %u", server_address);
-
-		/* Send data packet (string) to server */
-
-		/* 1. Connect to host on 'server_address', port MY_SERVER_PORT with regular UDP-like protocol and 1000 ms timeout */
-		csp_conn_t * conn = csp_connect(CSP_PRIO_NORM, server_address, MY_SERVER_PORT, 1000, CSP_O_NONE);
-		if (conn == NULL) {
-			/* Connect failed */
-			csp_log_error("Connection failed");
-			return CSP_TASK_RETURN;
-		}
-
-		/* 2. Get packet buffer for message/data */
-		csp_packet_t * packet = csp_buffer_get(100);
-		if (packet == NULL) {
-			/* Could not get buffer element */
-			csp_log_error("Failed to get CSP buffer");
-			return CSP_TASK_RETURN;
-		}
-
-		/* 3. Copy data to packet */
-		snprintf((char *) packet->data, csp_buffer_data_size(), "Hello World (%u)", ++count);
-
-		/* 4. Set packet length */
-		packet->length = (strlen((char *) packet->data) + 1); /* include the 0 termination */
-
-		/* 5. Send packet */
-		if (!csp_send(conn, packet, 1000)) {
-			/* Send failed */
-			csp_log_error("Send failed");
-			csp_buffer_free(packet);
-		}
-
-		/* 6. Close connection */
-		csp_close(conn);
 	}
 
 	return CSP_TASK_RETURN;
@@ -233,7 +194,7 @@ int main(int argc, char * argv[]) {
     if (kiss_device) {
         csp_usart_conf_t conf = {
             .device = kiss_device,
-            .baudrate = 115200, /* supported on all platforms */
+            .baudrate = 9600, /* supported on all platforms */
             .databits = 8,
             .stopbits = 1,
             .paritysetting = 0,
