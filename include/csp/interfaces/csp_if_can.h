@@ -48,6 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <csp/csp_interface.h>
+#include "HL_can.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -134,6 +135,7 @@ typedef struct {
     uint32_t cfp_frame_id;
     /** Tx function */
     csp_can_driver_tx_t tx_func;
+    canBASE_t *can;
 } csp_can_interface_data_t;
 
 /**
