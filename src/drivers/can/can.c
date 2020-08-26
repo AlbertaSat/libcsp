@@ -107,7 +107,7 @@ int csp_can_open_and_add_interface(const char * ifname, csp_iface_t ** return_if
         vPortFree(ctx);
         return res;
     }
-    canData = xQueueCreate((unsigned portBASE_TYPE)5,
+    canData = xQueueCreate((unsigned portBASE_TYPE)32,
                 (unsigned portBASE_TYPE)sizeof(can_frame_t));
      xTaskCreate(can_rx_thread, "can_rx", 256, (void *) ctx, 0, NULL);
     if (return_iface) {
