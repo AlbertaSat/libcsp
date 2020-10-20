@@ -28,6 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/drivers/can_socketcan.h>
 #include <csp/csp_endian.h>
 
+#include <fcntl.h>
+
 #define SOCKET_CAPSULE      "csp_socket_t"
 #define CONNECTION_CAPSULE  "csp_conn_t"
 #define PACKET_CAPSULE      "csp_packet_t"
@@ -880,13 +882,13 @@ static PyObject* csp_init_fifo_iface(PyObject *self, PyObject *args) {
     tx_channel = open(tx_channel_name, O_RDWR);
     if (tx_channel < 0) {
         printf("Failed to open TX channel\r\n");
-        return -1;
+        return NULL;
     }
 
     rx_channel = open(rx_channel_name, O_RDWR);
     if (rx_channel < 0) {
         printf("Failed to open RX channel\r\n");
-        return -1;
+        return NULL;
     }
     pthread_create(&rx_thread, NULL, fifo_rx, NULL);
 }
