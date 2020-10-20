@@ -841,6 +841,57 @@ static PyObject* pycsp_kiss_init(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+/* FIFO INTERFACE */
+pthread_t rx_thread;
+int rx_channel, tx_channel;
+#define BUF_SIZE    250
+
+int csp_fifo_tx(csp_iface_t *ifc, csp_packet_t *packet, uint32_t timeout);
+
+csp_iface_t csp_if_fifo = {
+    .name = "fifo",
+    .nexthop = csp_fifo_tx,
+    .mtu = BUF_SIZE,
+};
+
+int csp_fifo_tx(csp_iface_t *ifc, csp_packet_t *packet, uint32_t timeout) {
+    /* Write packet to fifo */
+    if (write(tx_channel, &packet->length, packet->length + sizeof(uint32_t) + sizeof(uint16_t)) < 0)
+        printf("Failed to write frame\r\n");
+    csp_buffer_free(packet);
+    return CSP_ERR_NONE;
+}
+
+void * fifo_rx(void * parameters) {
+    csp_packet_t *buf = csp_buffer_get(BUF_SIZE);
+    /* Wait for packet on fifo */
+    while (read(rx_channel, &buf->length, BUF_SIZE) > 0) {
+        buf = csp_buffer_get(BUF_SIZE);
+    }
+
+    return NULL;
+}
+/** FIFO INTERFACE ENDS **/
+
+static PyObject* csp_init_fifo_iface(PyObject *self, PyObject *args) {
+    char *tx_channel_name, *rx_channel_name;
+    tx_channel_name = "/sat_to_ground";
+    rx_channel_name = "/ground_to_sat";
+    tx_channel = open(tx_channel_name, O_RDWR);
+    if (tx_channel < 0) {
+        printf("Failed to open TX channel\r\n");
+        return -1;
+    }
+
+    rx_channel = open(rx_channel_name, O_RDWR);
+    if (rx_channel < 0) {
+        printf("Failed to open RX channel\r\n");
+        return -1;
+    }
+    pthread_create(&rx_thread, NULL, fifo_rx, NULL);
+}
+
+
 static PyObject* pycsp_packet_set_data(PyObject *self, PyObject *args) {
     PyObject* packet_capsule;
     Py_buffer data;
@@ -949,6 +1000,7 @@ static PyMethodDef methods[] = {
     /* csp/interfaces/csp_if_zmqhub.h */
     {"zmqhub_init",         pycsp_zmqhub_init,         METH_VARARGS, ""},
     {"kiss_init",           pycsp_kiss_init,           METH_VARARGS, ""},
+    {"fifo_init", csp_init_fifo_iface, METH_VARARGS, ""},
 
     /* csp/drivers/can_socketcan.h */
     {"can_socketcan_init",  pycsp_can_socketcan_init,  METH_VARARGS, ""},
