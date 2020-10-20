@@ -891,6 +891,8 @@ static PyObject* csp_init_fifo_iface(PyObject *self, PyObject *args) {
         return NULL;
     }
     pthread_create(&rx_thread, NULL, fifo_rx, NULL);
+    csp_route_set(CSP_DEFAULT_ROUTE, &csp_if_fifo, CSP_NODE_MAC);
+    Py_RETURN_NONE;
 }
 
 
