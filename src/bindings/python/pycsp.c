@@ -877,8 +877,8 @@ void * fifo_rx(void * parameters) {
 
 static PyObject* csp_init_fifo_iface(PyObject *self, PyObject *args) {
     char *tx_channel_name, *rx_channel_name;
-    tx_channel_name = "/datavolume1/sat_to_ground";
-    rx_channel_name = "/datavolume1/ground_to_sat";
+    tx_channel_name = "/datavolume1/ground_to_sat";
+    rx_channel_name = "/datavolume1/sat_to_ground";
     tx_channel = open(tx_channel_name, O_RDWR);
     if (tx_channel < 0) {
         printf("Failed to open TX channel\r\n");
