@@ -858,9 +858,11 @@ csp_iface_t csp_if_fifo = {
 
 int csp_fifo_tx(csp_iface_t *ifc, csp_packet_t *packet, uint32_t timeout) {
     /* Write packet to fifo */
+    printf("writing packet");
     if (write(tx_channel, &packet->length, packet->length + sizeof(uint32_t) + sizeof(uint16_t)) < 0)
         printf("Failed to write frame\r\n");
     csp_buffer_free(packet);
+
     return CSP_ERR_NONE;
 }
 
