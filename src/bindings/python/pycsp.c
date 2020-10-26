@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/interfaces/csp_if_zmqhub.h>
 #include <csp/interfaces/csp_if_kiss.h>
 #include <csp/drivers/usart.h>
-#include <csp/drivers/can_socketcan.h>
+// #include <csp/drivers/can_socketcan.h>
 #include <csp/csp_endian.h>
 
 #include <fcntl.h>
@@ -148,7 +148,7 @@ static PyObject* pycsp_init(PyObject *self, PyObject *args) {
     conf.hostname = hostname;
     conf.model = model;
     conf.revision = revision;
-    
+
     int res = csp_init(&conf);
     if (res != CSP_ERR_NONE) {
         return PyErr_Error("csp_init()", res);
@@ -809,21 +809,21 @@ static PyObject* pycsp_zmqhub_init(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
-static PyObject* pycsp_can_socketcan_init(PyObject *self, PyObject *args) {
-    char* ifc;
-    int bitrate = 1000000;
-    int promisc = 0;
-    if (!PyArg_ParseTuple(args, "s|ii", &ifc, &bitrate, &promisc)) {
-        return NULL;
-    }
-
-    int res = csp_can_socketcan_open_and_add_interface(ifc, CSP_IF_CAN_DEFAULT_NAME, bitrate, promisc, NULL);
-    if (res != CSP_ERR_NONE) {
-        return PyErr_Error("csp_can_socketcan_open_and_add_interface()", res);
-    }
-
-    Py_RETURN_NONE;
-}
+// static PyObject* pycsp_can_socketcan_init(PyObject *self, PyObject *args) {
+//     char* ifc;
+//     int bitrate = 1000000;
+//     int promisc = 0;
+//     if (!PyArg_ParseTuple(args, "s|ii", &ifc, &bitrate, &promisc)) {
+//         return NULL;
+//     }
+//
+//     int res = csp_can_socketcan_open_and_add_interface(ifc, CSP_IF_CAN_DEFAULT_NAME, bitrate, promisc, NULL);
+//     if (res != CSP_ERR_NONE) {
+//         return PyErr_Error("csp_can_socketcan_open_and_add_interface()", res);
+//     }
+//
+//     Py_RETURN_NONE;
+// }
 
 static PyObject* pycsp_kiss_init(PyObject *self, PyObject *args) {
     char* device;
@@ -858,9 +858,9 @@ csp_iface_t csp_if_fifo = {
 
 int csp_fifo_tx(const csp_route_t * ifroute, csp_packet_t *packet) {
     /* Write packet to fifo */
-    printf("writing packet");
     if (write(tx_channel, &packet->length, packet->length + sizeof(uint32_t) + sizeof(uint16_t)) < 0)
         printf("Failed to write frame\r\n");
+    fsync(tx_channel);
     csp_buffer_free(packet);
 
     return CSP_ERR_NONE;
@@ -1010,7 +1010,7 @@ static PyMethodDef methods[] = {
     {"fifo_init", csp_init_fifo_iface, METH_VARARGS, ""},
 
     /* csp/drivers/can_socketcan.h */
-    {"can_socketcan_init",  pycsp_can_socketcan_init,  METH_VARARGS, ""},
+    // {"can_socketcan_init",  pycsp_can_socketcan_init,  METH_VARARGS, ""},
 
     /* helpers */
     {"packet_get_length",   pycsp_packet_get_length,   METH_O,       ""},
@@ -1116,7 +1116,6 @@ PyMODINIT_FUNC PyInit_libcsp_py3(void) {
     PyModule_AddIntConstant(m, "CSP_NODE_MAC", CSP_NODE_MAC);
     PyModule_AddIntConstant(m, "CSP_NO_VIA_ADDRESS", CSP_NO_VIA_ADDRESS);
     PyModule_AddIntConstant(m, "CSP_MAX_TIMEOUT", CSP_MAX_TIMEOUT);
-    
+
     return m;
 }
-
