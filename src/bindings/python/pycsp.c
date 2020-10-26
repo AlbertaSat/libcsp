@@ -848,7 +848,7 @@ pthread_t rx_thread;
 int rx_channel, tx_channel;
 #define BUF_SIZE    250
 
-int csp_fifo_tx(csp_iface_t *ifc, csp_packet_t *packet, uint32_t timeout);
+int csp_fifo_tx(const csp_route_t * ifroute, csp_packet_t *packet);
 
 csp_iface_t csp_if_fifo = {
     .name = "fifo",
@@ -856,7 +856,7 @@ csp_iface_t csp_if_fifo = {
     .mtu = BUF_SIZE,
 };
 
-int csp_fifo_tx(csp_iface_t *ifc, csp_packet_t *packet, uint32_t timeout) {
+int csp_fifo_tx(const csp_route_t * ifroute, csp_packet_t *packet) {
     /* Write packet to fifo */
     printf("writing packet");
     if (write(tx_channel, &packet->length, packet->length + sizeof(uint32_t) + sizeof(uint16_t)) < 0)
