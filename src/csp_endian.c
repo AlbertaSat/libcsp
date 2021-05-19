@@ -22,12 +22,43 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*Custom function by Dustin Wagner
 Convert signed 16-bit number from host byte order to network byte order*/
-inline uint16_t __attribute__ ((__const__)) csp_shton16(int16_t h16) {
+inline int16_t __attribute__ ((__const__)) csp_shton16(int16_t h16) {
 #if (CSP_BIG_ENDIAN)
 	return h16;
 #else
 	return (((h16 & 0xff00) >> 8) |
 			((h16 & 0x00ff) << 8));
+#endif
+}
+
+/*Custom function by Dustin Wagner
+Convert signed 32-bit number from host byte order to network byte order*/
+inline int32_t __attribute__ ((__const__)) csp_shton32(int32_t h32) {
+#if (CSP_BIG_ENDIAN)
+	return h32;
+#else
+	return (((h32 & 0xff000000) >> 24) |
+			((h32 & 0x000000ff) << 24) |
+			((h32 & 0x0000ff00) <<  8) |
+			((h32 & 0x00ff0000) >>  8));
+#endif
+}
+
+/*Custom function by Dustin Wagner
+Convert signed 64-bit number from host byte order to network byte order*/
+/* Convert 64-bit number from host byte order to network byte order */
+inline int64_t __attribute__ ((__const__)) csp_shton64(int64_t h64) {
+#if (CSP_BIG_ENDIAN)
+	return h64;
+#else
+	return (((h64 & 0xff00000000000000LL) >> 56) |
+			((h64 & 0x00000000000000ffLL) << 56) |
+			((h64 & 0x00ff000000000000LL) >> 40) |
+			((h64 & 0x000000000000ff00LL) << 40) |
+			((h64 & 0x0000ff0000000000LL) >> 24) |
+			((h64 & 0x0000000000ff0000LL) << 24) |
+			((h64 & 0x000000ff00000000LL) >>  8) |
+			((h64 & 0x00000000ff000000LL) <<  8));
 #endif
 }
 
