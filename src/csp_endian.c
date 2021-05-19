@@ -20,6 +20,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <csp/csp_endian.h>
 
+/*Custom function by Dustin Wagner
+Convert signed 16-bit number from host byte order to network byte order*/
+inline uint16_t __attribute__ ((__const__)) csp_shton16(int16_t h16) {
+#if (CSP_BIG_ENDIAN)
+	return h16;
+#else
+	return (((h16 & 0xff00) >> 8) |
+			((h16 & 0x00ff) << 8));
+#endif
+}
+
 /* Convert 16-bit number from host byte order to network byte order */
 inline uint16_t __attribute__ ((__const__)) csp_hton16(uint16_t h16) {
 #if (CSP_BIG_ENDIAN)
