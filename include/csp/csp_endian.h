@@ -35,6 +35,21 @@ extern "C" {
 /**
    Convert from host order to network order.
 */
+int16_t csp_shton16(int16_t h16);
+
+/**
+   Convert from host order to network order.
+*/
+int32_t csp_shton32(int32_t h32);
+
+/**
+   Convert from host order to network order.
+*/
+int64_t csp_shton64(int64_t h64);
+
+/**
+   Convert from host order to network order.
+*/
 uint16_t csp_hton16(uint16_t h16);
 
 /**
