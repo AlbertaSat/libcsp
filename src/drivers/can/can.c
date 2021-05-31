@@ -121,7 +121,7 @@ int csp_can_open_and_add_interface(const char * ifname, csp_iface_t ** return_if
     ctx->iface.interface_data = &ctx->ifdata;
     ctx->iface.driver_data = ctx;
     ctx->ifdata.tx_func = csp_can_tx_frame;
-    ctx->ifdata.can = canREG2; // register to send on
+    ctx->ifdata.can = canREG1; // register to send on
     int res = csp_can_add_interface(&ctx->iface);
     if (res != CSP_ERR_NONE) {
         vPortFree(ctx);
