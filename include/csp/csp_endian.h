@@ -33,16 +33,19 @@ extern "C" {
 #endif
 
 /**
+ * Custom function by Dustin Wagner
    Convert from host order to network order.
 */
 int16_t csp_shton16(int16_t h16);
 
 /**
+ * Custom function by Dustin Wagner
    Convert from host order to network order.
 */
 int32_t csp_shton32(int32_t h32);
 
 /**
+ * Custom function by Dustin Wagner
    Convert from host order to network order.
 */
 int64_t csp_shton64(int64_t h64);
