@@ -75,7 +75,7 @@ static inline void csp_conf_get_defaults(csp_conf_t * conf) {
 	conf->port_max_bind = 24;
 	conf->rdp_max_window = 20;
 	conf->buffers = 10;
-	conf->buffer_data_size = 256;
+	conf->buffer_data_size = 512;
 	conf->conn_dfl_so = CSP_O_NONE;
 }
 
